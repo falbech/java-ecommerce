@@ -1,4 +1,4 @@
-package br.com.alura.ecommerce;
+package br.com.jstore.ecommerce;
 
 import java.math.BigDecimal;
 
@@ -23,6 +23,11 @@ public class Order {
 
 	public BigDecimal getAmount() {
 		return amount;
+	}
+
+	@Override
+	public String toString() {
+		return "Order [userId=" + userId + ", orderId=" + orderId + ", amount=" + amount + "]";
 	}
 	
 	

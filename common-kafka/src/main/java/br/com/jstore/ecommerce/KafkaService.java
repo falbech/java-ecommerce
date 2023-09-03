@@ -1,4 +1,4 @@
-package br.com.alura.ecommerce;
+package br.com.jstore.ecommerce;
 
 import java.io.Closeable;
 import java.time.Duration;
@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -38,7 +39,12 @@ public class KafkaService<T> implements Closeable {
 			if (!records.isEmpty()) {
 				System.out.println("Found " + records.count() + " records");
 				for (var record : records) {
-					this.parse.consume(record);
+					try {
+						this.parse.consume(record);
+					} catch (Exception e) {
+						// only catches exception to be able to recover and parse the next ones
+						e.printStackTrace();
+					} 
 				}
 			}
 		}

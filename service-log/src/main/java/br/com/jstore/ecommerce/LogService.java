@@ -1,4 +1,4 @@
-package br.com.alura.ecommerce;
+package br.com.jstore.ecommerce;
 
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -7,6 +7,8 @@ import java.util.regex.Pattern;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
+
+import br.com.jstore.ecommerce.KafkaService;
 
 public class LogService {
 

@@ -1,4 +1,4 @@
-package br.com.alura.ecommerce;
+package br.com.jstore.ecommerce;
 
 import org.apache.kafka.common.serialization.Serializer;
 
