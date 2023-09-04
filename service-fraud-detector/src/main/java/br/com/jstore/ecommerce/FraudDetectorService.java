@@ -6,15 +6,12 @@ import java.util.concurrent.ExecutionException;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
-import br.com.jstore.ecommerce.KafkaDispatcher;
-import br.com.jstore.ecommerce.KafkaService;
-
 public class FraudDetectorService {
 
 	public static void main(String[] args) throws InterruptedException, ExecutionException {
 		
 		var fraudService = new FraudDetectorService();
-		try(var service = new KafkaService(FraudDetectorService.class.getSimpleName(),"ECOMMERCE_NEW_ORDER", fraudService::parse, Order.class, Map.of())){
+		try(var service = new KafkaService<>(FraudDetectorService.class.getSimpleName(),"ECOMMERCE_NEW_ORDER", fraudService::parse, Order.class, Map.of())){
 			service.run();			
 		}
 	}
