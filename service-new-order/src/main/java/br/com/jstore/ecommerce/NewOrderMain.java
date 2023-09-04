@@ -4,8 +4,6 @@ import java.math.BigDecimal;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
-import br.com.jstore.ecommerce.KafkaDispatcher;
-
 public class NewOrderMain {
 
 	public static void main(String[] args) throws InterruptedException, ExecutionException {
@@ -17,10 +15,10 @@ public class NewOrderMain {
 					var amount = new BigDecimal(Math.random() * 5000 + 1);
 					
 					var order = new Order(orderId, amount, email);
-					orderDispatcher.send("ECOMMERCE_NEW_ORDER", email, order);
+					orderDispatcher.send("ECOMMERCE_NEW_ORDER", email, new CorrelationId(NewOrderMain.class.getSimpleName()),order);
 
 					var emailContent = "Thank you for your order, it is currently being processed.";
-					emailDispatcher.send("ECOMMERCE_SEND_EMAIL", email, emailContent);
+					emailDispatcher.send("ECOMMERCE_SEND_EMAIL", email, new CorrelationId(NewOrderMain.class.getSimpleName()),emailContent);
 				}
 			}
 		}

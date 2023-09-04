@@ -19,7 +19,7 @@ public class NewOrderServlet extends HttpServlet {
 	public void init() throws ServletException {
 		super.init();
 	}
-	
+
 	@Override
 	public void destroy() {
 		super.destroy();
@@ -37,10 +37,12 @@ public class NewOrderServlet extends HttpServlet {
 
 			var orderId = UUID.randomUUID().toString();
 			var order = new Order(orderId, amount, email);
-			orderDispatcher.send("ECOMMERCE_NEW_ORDER", email, order);
+			orderDispatcher.send("ECOMMERCE_NEW_ORDER", email, new CorrelationId(NewOrderServlet.class.getSimpleName()),
+					order);
 
 			var emailContent = "Thank you for your order, it is currently being processed.";
-			emailDispatcher.send("ECOMMERCE_SEND_EMAIL", email, emailContent);
+			emailDispatcher.send("ECOMMERCE_SEND_EMAIL", email,
+					new CorrelationId(NewOrderServlet.class.getSimpleName()), emailContent);
 			System.out.println("New order successfully sent.");
 			resp.setStatus(HttpServletResponse.SC_OK);
 			resp.getWriter().println("New order successfully sent.");
