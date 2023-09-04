@@ -3,11 +3,13 @@ package br.com.jstore.ecommerce;
 import java.io.Closeable;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.StringSerializer;
 
 public class KafkaDispatcher<T> implements Closeable {
@@ -18,8 +20,7 @@ public class KafkaDispatcher<T> implements Closeable {
 		this.producer = new KafkaProducer<>(properties());
 	}
 
-	public void send(String topic, String key, CorrelationId id, T payload)
-			throws InterruptedException, ExecutionException {
+	Future<RecordMetadata> sendAsync(String topic, String key, CorrelationId id, T payload) {
 		var value = new Message<>(id, payload);
 		var record = new ProducerRecord<>(topic, key, value);
 
@@ -31,7 +32,13 @@ public class KafkaDispatcher<T> implements Closeable {
 			System.out.println("sucesso enviando " + data.topic() + ":::" + data.partition() + "/" + data.offset() + "/"
 					+ data.timestamp());
 		};
-		this.producer.send(record, callback).get();
+		return this.producer.send(record, callback);
+	}
+
+	public void send(String topic, String key, CorrelationId id, T payload)
+			throws InterruptedException, ExecutionException {
+		var future = sendAsync(topic, key, id, payload);
+		future.get();
 	}
 
 	private static Properties properties() {

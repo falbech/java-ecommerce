@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -16,34 +17,44 @@ public class KafkaService<T> implements Closeable {
 
 	private final KafkaConsumer<String, Message<T>> consumer;
 	private final ConsumerFunction<T> parse;
+	
 
-	KafkaService(String groupId, String topic, ConsumerFunction<T> parse, Class<T> type, Map<String, String> overrideProperties) {
+	KafkaService(String groupId, String topic, ConsumerFunction<T> parse, Class<T> type,
+			Map<String, String> overrideProperties) {
 		this(parse, groupId, type, overrideProperties);
 		consumer.subscribe(Collections.singletonList(topic));
 	}
 
-	KafkaService(String groupId, Pattern topic, ConsumerFunction<T> parse, Class<T> type, Map<String, String> overrideProperties) {
+	KafkaService(String groupId, Pattern topic, ConsumerFunction<T> parse, Class<T> type,
+			Map<String, String> overrideProperties) {
 		this(parse, groupId, type, overrideProperties);
 		consumer.subscribe(topic);
 	}
 
-	private KafkaService(ConsumerFunction<T> parse, String groupId, Class<T> type, Map<String, String> overrideProperties) {
+	private KafkaService(ConsumerFunction<T> parse, String groupId, Class<T> type,
+			Map<String, String> overrideProperties) {
 		this.parse = parse;
 		this.consumer = new KafkaConsumer<String, Message<T>>(properties(type, groupId, overrideProperties));
 	}
 
-	void run() {
-		while (true) {
-			var records = consumer.poll(Duration.ofMillis(100));
-			if (!records.isEmpty()) {
-				System.out.println("Found " + records.count() + " records");
-				for (var record : records) {
-					try {
-						this.parse.consume(record);
-					} catch (Exception e) {
-						// only catches exception to be able to recover and parse the next ones
-						e.printStackTrace();
-					} 
+	void run() throws InterruptedException, ExecutionException {
+		try(var deadLetter = new KafkaDispatcher<>()){			
+			while (true) {
+				var records = consumer.poll(Duration.ofMillis(100));
+				if (!records.isEmpty()) {
+					System.out.println("Found " + records.count() + " records");
+					for (var record : records) {
+						try {
+							this.parse.consume(record);
+						} catch (Exception e) {
+							// only catches exception to be able to recover and parse the next ones
+							e.printStackTrace();
+							var message = record.value();
+							deadLetter.send("ECOMMERCE_DEADLETTER", message.getId().toString(),
+									message.getId().continueWith("DeadLetter"),
+									new GsonSerializer().serialize("", message));
+						}
+					}
 				}
 			}
 		}
