@@ -5,18 +5,13 @@
     <artifactId>ecommerce</artifactId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
-  <groupId>br.com.alura.ecommerce</groupId>
-  <artifactId>service-fraud-detector</artifactId>
+  <artifactId>common-database</artifactId>
+  
   <dependencies>
-  	<dependency>
-  		<groupId>br.com.alura</groupId>
-  		<artifactId>common-kafka</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>br.com.alura</groupId>
-  		<artifactId>common-database</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
-  	</dependency>
+	  <dependency> 
+			<groupId>org.xerial</groupId>
+			<artifactId>sqlite-jdbc</artifactId>
+			<version>3.42.0.1</version>
+		</dependency>
   </dependencies>
 </project>

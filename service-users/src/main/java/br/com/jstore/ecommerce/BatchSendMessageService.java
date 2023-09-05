@@ -12,6 +12,9 @@ import javax.swing.plaf.basic.BasicTableHeaderUI;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
+import br.com.jstore.ecommerce.consumer.KafkaService;
+import br.com.jstore.ecommerce.dispatcher.KafkaDispatcher;
+
 public class BatchSendMessageService {
 
 	private Connection connection;
@@ -30,7 +33,7 @@ public class BatchSendMessageService {
 	public static void main(String[] args) throws InterruptedException, ExecutionException, SQLException {
 		var batchService = new BatchSendMessageService();
 		try (var service = new KafkaService<>(BatchSendMessageService.class.getSimpleName(),
-				"ECOMMERCE_SEND_MESSAGE_TO_ALL_USERS", batchService::parse, String.class, Map.of())) {
+				"ECOMMERCE_SEND_MESSAGE_TO_ALL_USERS", batchService::parse, Map.of())) {
 			service.run();
 		}
 	}

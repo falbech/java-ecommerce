@@ -2,7 +2,7 @@ package br.com.jstore.ecommerce;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.UUID;
+import java.sql.SQLException;
 import java.util.concurrent.ExecutionException;
 
 import javax.servlet.ServletException;
@@ -10,10 +10,18 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import br.com.jstore.ecommerce.database.LocalDatabase;
+import br.com.jstore.ecommerce.dispatcher.KafkaDispatcher;
+
 public class NewOrderServlet extends HttpServlet {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private final KafkaDispatcher<Order> orderDispatcher = new KafkaDispatcher<Order>();
 	private final KafkaDispatcher<String> emailDispatcher = new KafkaDispatcher<String>();
+	private LocalDatabase database;
 
 	@Override
 	public void init() throws ServletException {
@@ -35,20 +43,29 @@ public class NewOrderServlet extends HttpServlet {
 			var email = req.getParameter("email");
 			var amount = new BigDecimal(req.getParameter("amount"));
 
-			var orderId = UUID.randomUUID().toString();
+			var orderId = req.getParameter("uuid");
 			var order = new Order(orderId, amount, email);
-			orderDispatcher.send("ECOMMERCE_NEW_ORDER", email, new CorrelationId(NewOrderServlet.class.getSimpleName()),
-					order);
 
-			var emailContent = "Thank you for your order, it is currently being processed.";
-			emailDispatcher.send("ECOMMERCE_SEND_EMAIL", email,
-					new CorrelationId(NewOrderServlet.class.getSimpleName()), emailContent);
+			try (var database = new OrdersDatabase()) {
+				if (database.saveNew(order)) {
+					orderDispatcher.send("ECOMMERCE_NEW_ORDER", email,
+							new CorrelationId(NewOrderServlet.class.getSimpleName()), order);
+					System.out.println("New order successfully sent.");
+					resp.setStatus(HttpServletResponse.SC_OK);
+					resp.getWriter().println("New order successfully sent.");
+
+				} else {
+					System.out.println("Old order received.");
+					resp.setStatus(HttpServletResponse.SC_OK);
+					resp.getWriter().println("Old order received.");
+
+				}
+			}
+
 			System.out.println("New order successfully sent.");
 			resp.setStatus(HttpServletResponse.SC_OK);
 			resp.getWriter().println("New order successfully sent.");
-		} catch (InterruptedException e) {
-			throw new ServletException(e);
-		} catch (ExecutionException e) {
+		} catch (InterruptedException | SQLException | ExecutionException e) {
 			throw new ServletException(e);
 		}
 
